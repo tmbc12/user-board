@@ -1,7 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css";
 
-const Card = ({ index, name, description, onNameChange, onDescriptionChange, onSave, isLoading }) => {
+const Card = ({
+  index,
+  name,
+  description,
+  onNameChange,
+  onDescriptionChange,
+  onSave,
+  isLoading,
+}) => {
   return (
     <div className="card">
       <input
@@ -10,6 +18,8 @@ const Card = ({ index, name, description, onNameChange, onDescriptionChange, onS
         value={name}
         onChange={(e) => onNameChange(index, e.target.value)}
         placeholder="Enter name"
+        readOnly
+        style={{ cursor: "default" }}
       />
       <textarea
         className="description"
@@ -17,13 +27,17 @@ const Card = ({ index, name, description, onNameChange, onDescriptionChange, onS
         onChange={(e) => onDescriptionChange(index, e.target.value)}
         placeholder="Enter work description"
       />
-      <button className="save-button" onClick={() => onSave(index)} disabled={isLoading}>
-  {isLoading ? (
-    <span className="loader"></span>
-  ) : (
-    <span className="tick-icon">✔</span>
-  )}
-</button>
+      <button
+        className="save-button"
+        onClick={() => onSave(index)}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <span className="loader"></span>
+        ) : (
+          <span className="tick-icon">✔</span>
+        )}
+      </button>
     </div>
   );
 };
@@ -33,7 +47,7 @@ const App = () => {
   const [loadingIndex, setLoadingIndex] = useState(null);
 
   useEffect(() => {
-    fetch('https://api-user-dashboard.vercel.app/cards')
+    fetch("https://api-user-dashboard.vercel.app/cards")
       .then((res) => res.json())
       .then((data) => setCards(data));
   }, []);
@@ -44,9 +58,9 @@ const App = () => {
     const card = cards[index];
 
     fetch(`https://api-user-dashboard.vercel.app/cards/${card._id}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(card),
     })
