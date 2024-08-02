@@ -13,14 +13,14 @@ const Card = ({
   return (
     <div className="card">
       <input
-        type="text"
-        className="name"
-        value={name}
-        onChange={(e) => onNameChange(index, e.target.value)}
-        placeholder="Enter name"
-        readOnly
-        style={{ cursor: "default" }}
-      />
+  type="text"
+  className="name"
+  value={name}
+  onChange={(e) => onNameChange(index, e.target.value)}
+  placeholder="Enter name"
+  readOnly
+  style={{ cursor: "default", border: "none", backgroundColor: "transparent" }}
+/>
       <textarea
         className="description"
         value={description}
