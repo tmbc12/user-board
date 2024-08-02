@@ -70,7 +70,9 @@ const App = () => {
         updatedCards[index] = updatedCard;
         setCards(updatedCards);
         setLoadingIndex(null);
-        alert(`Card ${index + 1} saved!`);
+
+        console.log(cards[index])
+        alert(`${cards[index].name} Work Updated!`);
       });
   };
 
