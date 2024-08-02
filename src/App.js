@@ -18,12 +18,12 @@ const Card = ({ index, name, description, onNameChange, onDescriptionChange, onS
         placeholder="Enter work description"
       />
       <button className="save-button" onClick={() => onSave(index)} disabled={isLoading}>
-        {isLoading ? (
-          <span className="loader"></span>
-        ) : (
-          'Save'
-        )}
-      </button>
+  {isLoading ? (
+    <span className="loader"></span>
+  ) : (
+    <span className="tick-icon">✔</span>
+  )}
+</button>
     </div>
   );
 };
