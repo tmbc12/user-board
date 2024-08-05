@@ -288,7 +288,7 @@ const HistoryPopup = ({ open, onClose }) => {
                     borderColor: "#bbb",
                   },
                 },
-                marginRight: 5 
+                marginRight: 2
               }}
               InputLabelProps={{
                 shrink: true,
@@ -319,7 +319,7 @@ const HistoryPopup = ({ open, onClose }) => {
                     borderColor: "#bbb",
                   },
                 },
-                marginRight: 5 
+                marginRight: 2
               }}
               InputLabelProps={{
                 shrink: true,
@@ -327,7 +327,7 @@ const HistoryPopup = ({ open, onClose }) => {
             />
             <Button
               variant="contained"
-              color="secondary"
+              color="primary"
               onClick={() => fetchHistoryData(tab)}
             >
               Apply
