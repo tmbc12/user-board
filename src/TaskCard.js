@@ -46,7 +46,9 @@ const TaskCard = ({ index, task, onDescriptionChange}) => {
       },
       body: JSON.stringify(newWork),
     })
-      .then((res) => res.json())
+      .then((res) => {res.json()
+        window.location.reload();
+      })
   };
 
   const handleComplete = () => {
@@ -70,9 +72,23 @@ const TaskCard = ({ index, task, onDescriptionChange}) => {
       },
       body: JSON.stringify(updatedWork),
     })
-      .then((res) => {res.json()
-        window.location.reload();
+      .then((res) => {
+        if (!res.ok) {
+          // Handle the error if the response status is not OK
+          throw new Error('Failed to update work');
+        }
+        return res.json(); // Parse the JSON from the response
       })
+      .then((data) => {
+        debugger;
+        alert('Updated successfully');
+        window.location.reload(); // Reload the page if needed
+      })
+      .catch((error) => {
+        // Handle any errors that occurred during the fetch
+        console.error('Error:', error);
+        alert('Failed to update work');
+      });
       
   };
 
