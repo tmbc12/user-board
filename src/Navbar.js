@@ -36,6 +36,19 @@ const Navbar = ({ onHistoryClick }) => {
           edge="end"
           color="inherit"
           onClick={onHistoryClick}
+          sx={{
+            transition: 'none', // Remove hover and click animations
+            '&:hover': {
+              backgroundColor: 'transparent', // Ensure no background color on hover
+            },
+            '&:active': {
+              backgroundColor: 'transparent', // Ensure no background color on click
+            },
+            '&:focus': {
+              outline: 'none', // Remove focus outline if needed
+              backgroundColor: 'transparent', // Ensure no background color on focus
+            },
+          }}
         >
           <HistoryIcon />
           <Typography

@@ -15,64 +15,110 @@ import {
   Paper,
   IconButton,
   Typography,
+  TextField,
+  Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import Timer from "./Timer";
+import axios from "axios";
 
 const HistoryPopup = ({ open, onClose }) => {
   const [tab, setTab] = useState(0);
-  const [history, setHistory] = useState(() => {
-    const savedHistory = localStorage.getItem("history");
-    return savedHistory ? JSON.parse(savedHistory) : { daily: [], weekly: [], monthly: [] };
+  const [time, setTime] = useState(0);
+  const [history, setHistory] = useState({
+    daily: [],
+    weekly: [],
+    monthly: [],
+    custom: [], // Added for custom range data
   });
+  const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState(""); // Start date for custom range
+  const [endDate, setEndDate] = useState(""); // End date for custom range
 
   useEffect(() => {
-    const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-    const newHistory = { ...history };
+    if (open) {
+      fetchHistoryData(tab);
+    }
+  }, [open, tab]);
 
-    const today = new Date().toLocaleDateString();
-    const thisWeek = new Date().toISOString().slice(0, 10);
-    const thisMonth = new Date().toISOString().slice(0, 7);
+  const fetchHistoryData = async (selectedTab) => {
+    setLoading(true);
+    let endpoint = "";
 
-    tasks.forEach((task) => {
-      if (task.time > 0) {
-        newHistory.daily.push({ date: today, ...task });
-        newHistory.weekly.push({ date: thisWeek, ...task });
-        newHistory.monthly.push({ date: thisMonth, ...task });
-      }
-    });
+    switch (selectedTab) {
+      case 0:
+        endpoint = "/work/today";
+        break;
+      case 1:
+        endpoint = "/work/lastweek";
+        break;
+      case 2:
+        endpoint = "/work/lastmonth";
+        break;
+      case 3: // Custom Range
+        endpoint = `/work/range?start=${encodeURIComponent(startDate)}&end=${encodeURIComponent(endDate)}`;
+        break;
+      default:
+        break;
+    }
 
-    setHistory(newHistory);
-    localStorage.setItem("history", JSON.stringify(newHistory));
-  }, [open]);
+    try {
+      // Prepend the base URL
+      const response = await axios.get(`https://api-user-dashboard.vercel.app/${endpoint}`);
+      console.log(response);
+      const data = response.data;
+
+      const updatedHistory = { ...history };
+      if (selectedTab === 0) updatedHistory.daily = data;
+      else if (selectedTab === 1) updatedHistory.weekly = data;
+      else if (selectedTab === 2) updatedHistory.monthly = data;
+      else if (selectedTab === 3) updatedHistory.custom = data;
+
+      setHistory(updatedHistory);
+    } catch (error) {
+      console.error("Error fetching work history:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  function calculateSecondsBetweenDates(pastDate, endDate) {
+    const past = new Date(pastDate);
+    const current = endDate ? new Date(endDate) : new Date();
+
+    const differenceInMilliseconds = current - past;
+    const differenceInSeconds = Math.floor(differenceInMilliseconds / 1000);
+    return differenceInSeconds;
+  }
 
   const renderHistoryTable = (data) => (
     <TableContainer component={Paper} sx={{ marginTop: 2 }}>
       <Table>
-        <TableHead sx={{ backgroundColor: "#f5f5f5" }}> {/* Grey background for table head */}
+        <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
           <TableRow>
             <TableCell
               sx={{
                 fontWeight: "bold",
                 fontSize: "1rem",
-                borderBottom: "1px solid #ddd", // Light border for table header
+                borderBottom: "1px solid #ddd",
               }}
             >
-              Project
+              Name
             </TableCell>
             <TableCell
               sx={{
                 fontWeight: "bold",
                 fontSize: "1rem",
-                borderBottom: "1px solid #ddd", // Light border for table header
+                borderBottom: "1px solid #ddd",
               }}
             >
-              Description
+              Work Description
             </TableCell>
             <TableCell
               sx={{
                 fontWeight: "bold",
                 fontSize: "1rem",
-                borderBottom: "1px solid #ddd", // Light border for table header
+                borderBottom: "1px solid #ddd",
               }}
             >
               Time
@@ -81,7 +127,7 @@ const HistoryPopup = ({ open, onClose }) => {
               sx={{
                 fontWeight: "bold",
                 fontSize: "1rem",
-                borderBottom: "1px solid #ddd", // Light border for table header
+                borderBottom: "1px solid #ddd",
               }}
             >
               Date
@@ -95,16 +141,16 @@ const HistoryPopup = ({ open, onClose }) => {
                 sx={{
                   backgroundColor: "#fff",
                   fontSize: "0.9rem",
-                  borderBottom: "1px solid #ddd", // Light border for table cells
+                  borderBottom: "1px solid #ddd",
                 }}
               >
-                {entry.name}
+                {entry.user.name}
               </TableCell>
               <TableCell
                 sx={{
                   backgroundColor: "#fff",
                   fontSize: "0.9rem",
-                  borderBottom: "1px solid #ddd", // Light border for table cells
+                  borderBottom: "1px solid #ddd",
                 }}
               >
                 {entry.description}
@@ -113,19 +159,24 @@ const HistoryPopup = ({ open, onClose }) => {
                 sx={{
                   backgroundColor: "#fff",
                   fontSize: "0.9rem",
-                  borderBottom: "1px solid #ddd", // Light border for table cells
+                  borderBottom: "1px solid #ddd",
                 }}
               >
-                {entry.time} minutes
+                <Timer
+                  isRunning={entry.stopTime ? false : true}
+                  onTimeUpdate={setTime}
+                  initialTime={calculateSecondsBetweenDates(entry?.startTime, entry?.stopTime)}
+                />
               </TableCell>
               <TableCell
                 sx={{
                   backgroundColor: "#fff",
                   fontSize: "0.9rem",
-                  borderBottom: "1px solid #ddd", // Light border for table cells
+                  borderBottom: "1px solid #ddd",
                 }}
               >
-                {entry.date}
+                {new Date(entry.startTime).toLocaleDateString()}{" "}
+                {/* Format date */}
               </TableCell>
             </TableRow>
           ))}
@@ -142,10 +193,10 @@ const HistoryPopup = ({ open, onClose }) => {
       maxWidth="md"
       sx={{
         "& .MuiDialog-paper": {
-          border: "none", // Remove border
-          boxShadow: "none", // Remove shadow if needed
-          borderRadius: 4, // Optional: keep border-radius for smooth edges
-          backgroundColor: "#fff", // White background
+          border: "none",
+          boxShadow: "none",
+          borderRadius: 4,
+          backgroundColor: "#fff",
         },
       }}
     >
@@ -157,55 +208,147 @@ const HistoryPopup = ({ open, onClose }) => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h6" component="div" sx={{ fontWeight: "bold", fontSize: "1.5rem" }}>
+        <Typography
+          variant="h6"
+          component="div"
+          sx={{ fontWeight: "bold", fontSize: "1.5rem" }}
+        >
           Work History
         </Typography>
         <IconButton
           aria-label="close"
           onClick={onClose}
-          sx={{
-            color: (theme) => theme.palette.grey[500],
-          }}
+          sx={{ color: (theme) => theme.palette.grey[500] }}
         >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        <Tabs
-          value={tab}
-          onChange={(e, newValue) => setTab(newValue)}
-          aria-label="history tabs"
-          sx={{
-            "& .MuiTabs-indicator": {
-              display: "none", // Remove default bottom indicator
-            },
-          }}
-        >
-          {["Daily", "Weekly", "Monthly"].map((label, index) => (
-            <Tab
-              key={label}
-              label={label}
-              sx={{
-                fontWeight: "bold",
-                textTransform: "none",
-                fontSize: "1rem", // Increase font size for tabs
-                backgroundColor: tab === index ? "#000" : "#f5f5f5",
-                color: tab === index ? "#fff !important" : "#000",
-                borderRadius: index === 0 ? "8px 0 0 8px" : index === 2 ? "0 8px 8px 0" : "0", // Rounded corners for first and last tabs
-                "&:hover": {
-                  backgroundColor: tab === index ? "#333" : "#e0e0e0",
+        <div className="Tab" style={{ display: "flex", flexDirection: "column" }}>
+          <Tabs
+            value={tab}
+            onChange={(e, newValue) => setTab(newValue)}
+            aria-label="history tabs"
+            sx={{
+              "& .MuiTabs-indicator": {
+                display: "none",
+              },
+            }}
+          >
+            {["Daily", "Weekly", "Monthly", "Custom Range"].map((label, index) => (
+              <Tab
+                key={label}
+                label={label}
+                sx={{
+                  fontWeight: "bold",
+                  textTransform: "none",
+                  fontSize: "1rem",
+                  backgroundColor: tab === index ? "#000" : "#f5f5f5",
+                  color: tab === index ? "#fff !important" : "#000",
+                  borderRadius:
+                    index === 0
+                      ? "8px 0 0 8px"
+                      : index === 3
+                      ? "0 8px 8px 0"
+                      : "0",
+                  "&:hover": {
+                    backgroundColor: tab === index ? "#333" : "#e0e0e0",
+                  },
+                  padding: "10px 20px",
+                  minWidth: 0,
+                }}
+              />
+            ))}
+          </Tabs>
+
+          {tab === 3 && (
+            <Box sx={{ marginTop: 4, justifyContent: "center", display: "flex" }}>
+            <TextField
+              label="Start Date (DD/MM/YYYY)"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              sx={{ 
+                fontFamily: "Roboto",
+                color: "#fff",
+                backgroundColor: "#fff",
+                borderRadius: 2,
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: "#fff",
+                  "& .MuiInputBase-input": {
+                    fontSize: "0.875rem",
+                  },
+                  "& fieldset": {
+                    borderColor: "#ddd",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#ccc",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#bbb",
+                  },
                 },
-                padding: "10px 20px", // Adjust padding
-                minWidth: 0, // Remove default min-width to ensure no extra margins
+                marginRight: 5 
+              }}
+              InputLabelProps={{
+                shrink: true,
               }}
             />
-          ))}
-        </Tabs>
-        <Box sx={{ marginTop: 2, maxHeight: 400, overflowY: "auto" }}>
-          {tab === 0 && renderHistoryTable(history.daily)}
-          {tab === 1 && renderHistoryTable(history.weekly)}
-          {tab === 2 && renderHistoryTable(history.monthly)}
-        </Box>
+            <TextField
+              label="End Date"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              sx={{ 
+                fontFamily: "Roboto",
+                color: "#fff",
+                backgroundColor: "#fff",
+                borderRadius: 2,
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: "#fff",
+                  "& .MuiInputBase-input": {
+                    fontSize: "0.875rem",
+                  },
+                  "& fieldset": {
+                    borderColor: "#ddd",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#ccc",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#bbb",
+                  },
+                },
+                marginRight: 5 
+              }}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => fetchHistoryData(tab)}
+            >
+              Apply
+            </Button>
+          </Box>
+          
+          )}
+
+          <Box sx={{ marginTop: 2, maxHeight: 400, overflowY: "auto" }}>
+            {loading ? (
+              <Typography>Loading...</Typography>
+            ) : (
+              <>
+                {tab === 0 && renderHistoryTable(history.daily)}
+                {tab === 1 && renderHistoryTable(history.weekly)}
+                {tab === 2 && renderHistoryTable(history.monthly)}
+                {tab === 3 && renderHistoryTable(history.custom)}
+              </>
+            )}
+          </Box>
+        </div>
       </DialogContent>
     </Dialog>
   );
