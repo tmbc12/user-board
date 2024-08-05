@@ -270,29 +270,21 @@ function fetchUser () {
   };
 
   return (
-    <div className="app">
-      <div
-        className="grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "16px",
-        }}
-      >
-        {cards.map((card, index) => (
+<div className="app">
+  <div className="grid">
+    {cards.map((card, index) => (
+      <TaskCard
+        key={card._id}
+        index={index}
+        task={card}
+        onDescriptionChange={handleDescriptionChange}
+      />
+    ))}
+    
+    <CreateCard fetchUser={fetchUser} />
+  </div>
+</div>
 
-          <TaskCard
-            key={card._id}
-            index={index}
-            task={card}
-            // task_id={card.lastWork._id}
-            onDescriptionChange={handleDescriptionChange}
-          />
-        ))}
-        
-        <CreateCard fetchUser={fetchUser} />
-      </div>
-    </div>
   );
 };
 

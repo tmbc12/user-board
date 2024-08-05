@@ -262,9 +262,9 @@ const HistoryPopup = ({ open, onClose }) => {
           </Tabs>
 
           {tab === 3 && (
-            <Box sx={{ marginTop: 4, justifyContent: "center", display: "flex" }}>
+            <Box sx={{ marginTop: 4, justifyContent: "Left", display: "flex" }}>
             <TextField
-              label="Start Date (DD/MM/YYYY)"
+              label="Start Date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
