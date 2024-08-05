@@ -17,7 +17,8 @@ import "@fontsource/montserrat/700.css"; // Bold font weight for Montserrat
 import "@fontsource/roboto/400.css"; // Normal font weight for Roboto
 import "@fontsource/roboto/700.css"; // Bold font weight for Roboto
 
-const TaskCard = ({ index, task, onDescriptionChange, onSave, task_id }) => {
+
+const TaskCard = ({ index, task, onDescriptionChange}) => {
   const [description, setDescription] = useState(task.description || '');
   const [time, setTime] = useState(task.time || 0);
   const [isRunning, setIsRunning] = useState(!!task.startTime && !task.stopTime);
@@ -46,16 +47,6 @@ const TaskCard = ({ index, task, onDescriptionChange, onSave, task_id }) => {
       body: JSON.stringify(newWork),
     })
       .then((res) => res.json())
-      .then((savedWork) => {
-        onSave(
-          index,
-          savedWork.description,
-          time,
-          savedWork._id,
-          savedWork.startTime,
-          null
-        );
-      });
   };
 
   const handleComplete = () => {
@@ -79,17 +70,10 @@ const TaskCard = ({ index, task, onDescriptionChange, onSave, task_id }) => {
       },
       body: JSON.stringify(updatedWork),
     })
-      .then((res) => res.json())
-      .then((updatedCard) => {
-        onSave(
-          index,
-          updatedCard.description,
-          time,
-          updatedCard._id,
-          updatedCard.startTime,
-          updatedCard.stopTime
-        );
-      });
+      .then((res) => {res.json()
+        window.location.reload();
+      })
+      
   };
 
   return (
