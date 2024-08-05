@@ -64,7 +64,7 @@ const HistoryPopup = ({ open, onClose }) => {
 
     try {
       // Prepend the base URL
-      const response = await axios.get(`https://api-user-dashboard.vercel.app/${endpoint}`);
+      const response = await axios.get(`https://api-user-dashboard.vercel.app${endpoint}`);
       console.log(response);
       const data = response.data;
 
