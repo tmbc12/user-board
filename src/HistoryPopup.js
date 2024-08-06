@@ -17,12 +17,13 @@ import {
   Typography,
   TextField,
   Button,
+  FormHelperText,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import Timer from "./Timer";
 import axios from "axios";
 
-const HistoryPopup = ({ open, onClose }) => {
+const HistoryPopup = ({ open, onClose, userId }) => {
   const [tab, setTab] = useState(0);
   const [time, setTime] = useState(0);
   const [history, setHistory] = useState({
@@ -34,17 +35,30 @@ const HistoryPopup = ({ open, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(""); // Start date for custom range
   const [endDate, setEndDate] = useState(""); // End date for custom range
+  const [dateError, setDateError] = useState(""); // To store date error message
 
   useEffect(() => {
     if (open) {
+      if (tab!=3)
       fetchHistoryData(tab);
     }
   }, [open, tab]);
 
   const fetchHistoryData = async (selectedTab) => {
+    if (selectedTab === 3 && (!startDate || !endDate)) {
+      setDateError("Both start and end dates are required.");
+      return;
+    }
+  
+    if (selectedTab === 3 && new Date(startDate) >= new Date(endDate)) {
+      setDateError("End date must be greater than start date.");
+      return;
+    }
+  
+    setDateError("");
     setLoading(true);
     let endpoint = "";
-
+  
     switch (selectedTab) {
       case 0:
         endpoint = "/work/today";
@@ -61,26 +75,31 @@ const HistoryPopup = ({ open, onClose }) => {
       default:
         break;
     }
-
+  
+    // Append userId to the endpoint if it's not null
+    if (userId) {
+      endpoint += endpoint.includes('?') ? `&userId=${encodeURIComponent(userId)}` : `?userId=${encodeURIComponent(userId)}`;
+    }
+  
     try {
       // Prepend the base URL
       const response = await axios.get(`https://api-user-dashboard.vercel.app${endpoint}`);
       console.log(response);
       const data = response.data;
-
+  
       const updatedHistory = { ...history };
       if (selectedTab === 0) updatedHistory.daily = data;
       else if (selectedTab === 1) updatedHistory.weekly = data;
       else if (selectedTab === 2) updatedHistory.monthly = data;
       else if (selectedTab === 3) updatedHistory.custom = data;
-
+  
       setHistory(updatedHistory);
     } catch (error) {
       console.error("Error fetching work history:", error);
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   function calculateSecondsBetweenDates(pastDate, endDate) {
     const past = new Date(pastDate);
@@ -91,99 +110,107 @@ const HistoryPopup = ({ open, onClose }) => {
     return differenceInSeconds;
   }
 
-  const renderHistoryTable = (data) => (
-    <TableContainer component={Paper} sx={{ marginTop: 2 }}>
-      <Table>
-        <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
-          <TableRow>
-            <TableCell
-              sx={{
-                fontWeight: "bold",
-                fontSize: "1rem",
-                borderBottom: "1px solid #ddd",
-              }}
-            >
-              Name
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: "bold",
-                fontSize: "1rem",
-                borderBottom: "1px solid #ddd",
-              }}
-            >
-              Work Description
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: "bold",
-                fontSize: "1rem",
-                borderBottom: "1px solid #ddd",
-              }}
-            >
-              Time
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: "bold",
-                fontSize: "1rem",
-                borderBottom: "1px solid #ddd",
-              }}
-            >
-              Date
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody sx={{ backgroundColor: "#fff" }}>
-          {data.map((entry, index) => (
-            <TableRow key={index}>
+    const renderHistoryTable = (data) => (
+      <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+        <Table>
+          <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+            <TableRow>
               <TableCell
                 sx={{
-                  backgroundColor: "#fff",
-                  fontSize: "0.9rem",
+                  fontWeight: "bold",
+                  fontSize: "1rem",
                   borderBottom: "1px solid #ddd",
                 }}
               >
-                {entry.user.name}
+                Name
               </TableCell>
               <TableCell
                 sx={{
-                  backgroundColor: "#fff",
-                  fontSize: "0.9rem",
+                  fontWeight: "bold",
+                  fontSize: "1rem",
                   borderBottom: "1px solid #ddd",
                 }}
               >
-                {entry.description}
+                Work Description
               </TableCell>
               <TableCell
                 sx={{
-                  backgroundColor: "#fff",
-                  fontSize: "0.9rem",
+                  fontWeight: "bold",
+                  fontSize: "1rem",
                   borderBottom: "1px solid #ddd",
                 }}
               >
-                <Timer
-                  isRunning={entry.stopTime ? false : true}
-                  onTimeUpdate={setTime}
-                  initialTime={calculateSecondsBetweenDates(entry?.startTime, entry?.stopTime)}
-                />
+                Time
               </TableCell>
               <TableCell
                 sx={{
-                  backgroundColor: "#fff",
-                  fontSize: "0.9rem",
+                  fontWeight: "bold",
+                  fontSize: "1rem",
                   borderBottom: "1px solid #ddd",
                 }}
               >
-                {new Date(entry.startTime).toLocaleDateString()}{" "}
-                {/* Format date */}
+                Date
               </TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+          </TableHead>
+          <TableBody sx={{ backgroundColor: "#fff" }}>
+            {data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ textAlign: "center", padding: "16px" }}>
+                  No data found
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((entry, index) => (
+                <TableRow key={index}>
+                  <TableCell
+                    sx={{
+                      backgroundColor: "#fff",
+                      fontSize: "0.9rem",
+                      borderBottom: "1px solid #ddd",
+                    }}
+                  >
+                    {entry.user.name}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      backgroundColor: "#fff",
+                      fontSize: "0.9rem",
+                      borderBottom: "1px solid #ddd",
+                    }}
+                  >
+                    {entry.description}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      backgroundColor: "#fff",
+                      fontSize: "0.9rem",
+                      borderBottom: "1px solid #ddd",
+                    }}
+                  >
+                    <Timer
+                      isRunning={entry.stopTime ? false : true}
+                      onTimeUpdate={setTime}
+                      initialTime={calculateSecondsBetweenDates(entry?.startTime, entry?.stopTime)}
+                    />
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      backgroundColor: "#fff",
+                      fontSize: "0.9rem",
+                      borderBottom: "1px solid #ddd",
+                    }}
+                  >
+                    {new Date(entry.startTime).toLocaleDateString()}{" "}
+                    {/* Format date */}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
 
   return (
     <Dialog
@@ -262,78 +289,85 @@ const HistoryPopup = ({ open, onClose }) => {
           </Tabs>
 
           {tab === 3 && (
-            <Box sx={{ marginTop: 4, justifyContent: "Left", display: "flex" }}>
-            <TextField
-              label="Start Date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              sx={{ 
-                fontFamily: "Roboto",
-                color: "#fff",
-                backgroundColor: "#fff",
-                borderRadius: 2,
-                "& .MuiOutlinedInput-root": {
+            <Box sx={{ marginTop: 4, justifyContent: "left", display: "flex", flexDirection: "column" }}>
+              <TextField
+                label="Start Date"
+                required
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                sx={{ 
+                  fontFamily: "Roboto",
+                  color: "#fff",
                   backgroundColor: "#fff",
-                  "& .MuiInputBase-input": {
-                    fontSize: "0.875rem",
+                  borderRadius: 2,
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#fff",
+                    "& .MuiInputBase-input": {
+                      fontSize: "0.875rem",
+                    },
+                    "& fieldset": {
+                      borderColor: "#ddd",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#ccc",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#bbb",
+                    },
                   },
-                  "& fieldset": {
-                    borderColor: "#ddd",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#ccc",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#bbb",
-                  },
-                },
-                marginRight: 2
-              }}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-            <TextField
-              label="End Date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              sx={{ 
-                fontFamily: "Roboto",
-                color: "#fff",
-                backgroundColor: "#fff",
-                borderRadius: 2,
-                "& .MuiOutlinedInput-root": {
+                  marginTop: 2
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              <TextField
+                label="End Date"
+                type="date"
+                required
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                sx={{ 
+                  fontFamily: "Roboto",
+                  color: "#fff",
                   backgroundColor: "#fff",
-                  "& .MuiInputBase-input": {
-                    fontSize: "0.875rem",
+                  borderRadius: 2,
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#fff",
+                    "& .MuiInputBase-input": {
+                      fontSize: "0.875rem",
+                    },
+                    "& fieldset": {
+                      borderColor: "#ddd",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#ccc",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#bbb",
+                    },
                   },
-                  "& fieldset": {
-                    borderColor: "#ddd",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#ccc",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#bbb",
-                  },
-                },
-                marginRight: 2
-              }}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => fetchHistoryData(tab)}
-            >
-              Apply
-            </Button>
-          </Box>
-          
+                  marginTop: 2
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              <Button
+              sx={{ marginTop: 2 }}
+                variant="contained"
+                color="primary"
+                onClick={() => fetchHistoryData(tab)}
+              >
+                Apply
+              </Button>
+              {dateError && (
+                <FormHelperText error sx={{ marginTop: 2 }}>
+                  {dateError}
+                </FormHelperText>
+              )}
+            </Box>
           )}
 
           <Box sx={{ marginTop: 2, maxHeight: 400, overflowY: "auto" }}>

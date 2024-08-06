@@ -10,6 +10,9 @@ import {
 import Timer from "./Timer";
 import "./App.css";
 import CreateCard from "./UserCreateCard";
+import HistoryIcon from "@mui/icons-material/History";
+import HistoryPopup from "./HistoryPopup";
+
 
 // Importing Google Fonts
 import "@fontsource/montserrat/400.css"; // Normal font weight for Montserrat
@@ -17,12 +20,14 @@ import "@fontsource/montserrat/700.css"; // Bold font weight for Montserrat
 import "@fontsource/roboto/400.css"; // Normal font weight for Roboto
 import "@fontsource/roboto/700.css"; // Bold font weight for Roboto
 
-
-const TaskCard = ({ index, task, onDescriptionChange}) => {
-  const [description, setDescription] = useState(task.description || '');
+const TaskCard = ({ index, task, onDescriptionChange }) => {
+  const [description, setDescription] = useState(task.description || "");
   const [time, setTime] = useState(task.time || 0);
-  const [isRunning, setIsRunning] = useState(!!task.startTime && !task.stopTime);
+  const [isRunning, setIsRunning] = useState(
+    !!task.startTime && !task.stopTime
+  );
   const [descriptionError, setDescriptionError] = useState(false);
+  const [currentUser, setCurrentUser] = useState();
 
   const handleStart = () => {
     if (!description.trim()) {
@@ -35,7 +40,7 @@ const TaskCard = ({ index, task, onDescriptionChange}) => {
     setIsRunning(true);
     const newWork = {
       userId: task._id,
-      description: description || '',
+      description: description || "",
       startTime: new Date().toISOString(),
     };
 
@@ -45,11 +50,17 @@ const TaskCard = ({ index, task, onDescriptionChange}) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(newWork),
-    })
-      .then((res) => {res.json()
-        window.location.reload();
-      })
+    }).then((res) => {
+      res.json();
+      window.location.reload();
+    });
   };
+
+  const handleHistory = () => {
+    debugger;
+    setHistoryOpen(true)
+    setCurrentUser(task._id)
+  }
 
   const handleComplete = () => {
     if (!description.trim()) {
@@ -75,22 +86,23 @@ const TaskCard = ({ index, task, onDescriptionChange}) => {
       .then((res) => {
         if (!res.ok) {
           // Handle the error if the response status is not OK
-          throw new Error('Failed to update work');
+          throw new Error("Failed to update work");
         }
         return res.json(); // Parse the JSON from the response
       })
       .then((data) => {
         debugger;
-        alert('Updated successfully');
+        alert("Updated successfully");
         window.location.reload(); // Reload the page if needed
       })
       .catch((error) => {
         // Handle any errors that occurred during the fetch
-        console.error('Error:', error);
-        alert('Failed to update work');
+        console.error("Error:", error);
+        alert("Failed to update work");
       });
-      
   };
+
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <MuiCard
@@ -105,7 +117,17 @@ const TaskCard = ({ index, task, onDescriptionChange}) => {
         },
       }}
     >
+       <HistoryPopup
+          userId={currentUser}
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+        />
       <CardContent>
+      <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
         <Typography
           variant="subtitle1"
           component="div"
@@ -117,6 +139,9 @@ const TaskCard = ({ index, task, onDescriptionChange}) => {
         >
           {task.name || "No Name"}
         </Typography>
+
+        <HistoryIcon onClick={handleHistory} sx={{cursor:"pointer"}}/>
+        </Stack>
         <TextField
           label="Work Description"
           value={description}
@@ -224,22 +249,21 @@ const TaskCard = ({ index, task, onDescriptionChange}) => {
   );
 };
 
-
 const App = () => {
   const [cards, setCards] = useState([]);
   const [loadingIndex, setLoadingIndex] = useState(null);
 
-  function calculateSecondsBetweenDates(pastDate,endDate) {
+  function calculateSecondsBetweenDates(pastDate, endDate) {
     const past = new Date(pastDate);
     const current = endDate ? new Date(endDate) : new Date();
 
     const differenceInMilliseconds = current - past;
     const differenceInSeconds = Math.floor(differenceInMilliseconds / 1000);
     return differenceInSeconds;
-}
+  }
 
-function fetchUser () {
-  fetch("https://api-user-dashboard.vercel.app/users")
+  function fetchUser() {
+    fetch("https://api-user-dashboard.vercel.app/users")
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
@@ -249,19 +273,22 @@ function fetchUser () {
             name: user.name,
             task_id: user.lastWork?._id || "",
             description: user.lastWork?.description || "",
-            time: user.lastWork?.startTime ? calculateSecondsBetweenDates(user.lastWork?.startTime,user.lastWork?.stopTime) : 0, // Initialize with 0; you can compute the time based on work start and stop times
+            time: user.lastWork?.startTime
+              ? calculateSecondsBetweenDates(
+                  user.lastWork?.startTime,
+                  user.lastWork?.stopTime
+                )
+              : 0, // Initialize with 0; you can compute the time based on work start and stop times
             startTime: user.lastWork?.startTime || null,
             stopTime: user.lastWork?.stopTime || null,
           }))
         );
       });
-}
+  }
 
   useEffect(() => {
-    fetchUser()
+    fetchUser();
   }, []);
-
-
 
   const handleDescriptionChange = (index, newDescription) => {
     const updatedCards = [...cards];
@@ -270,21 +297,20 @@ function fetchUser () {
   };
 
   return (
-<div className="app">
-  <div className="grid">
-    {cards.map((card, index) => (
-      <TaskCard
-        key={card._id}
-        index={index}
-        task={card}
-        onDescriptionChange={handleDescriptionChange}
-      />
-    ))}
-    
-    <CreateCard fetchUser={fetchUser} />
-  </div>
-</div>
+    <div className="app">
+      <div className="grid">
+        {cards.map((card, index) => (
+          <TaskCard
+            key={card._id}
+            index={index}
+            task={card}
+            onDescriptionChange={handleDescriptionChange}
+          />
+        ))}
 
+        <CreateCard fetchUser={fetchUser} />
+      </div>
+    </div>
   );
 };
 
