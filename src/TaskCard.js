@@ -139,8 +139,18 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
         >
           {task.name || "No Name"}
         </Typography>
-
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap="10px"
+        >
+        <Timer
+              isRunning={isRunning}
+              onTimeUpdate={setTime}
+              initialTime={time}
+            />
         <HistoryIcon onClick={handleHistory} sx={{cursor:"pointer"}}/>
+        </Stack>
         </Stack>
         <TextField
           label="Work Description"
@@ -198,11 +208,7 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
               fontWeight: 700,
             }}
           >
-            <Timer
-              isRunning={isRunning}
-              onTimeUpdate={setTime}
-              initialTime={time}
-            />
+            
           </Typography>
           {!isRunning ? (
             <Button
