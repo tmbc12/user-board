@@ -18,10 +18,12 @@ import {
   TextField,
   Button,
   FormHelperText,
+  Stack
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import Timer from "./Timer";
 import axios from "axios";
+import { TbTableExport } from "react-icons/tb";
 
 const HistoryPopup = ({ open, onClose, userId }) => {
   const [tab, setTab] = useState(0);
@@ -40,11 +42,11 @@ const HistoryPopup = ({ open, onClose, userId }) => {
   useEffect(() => {
     if (open) {
       if (tab!=3)
-      fetchHistoryData(tab);
+      fetchHistoryData(tab,false);
     }
   }, [open, tab]);
 
-  const fetchHistoryData = async (selectedTab) => {
+  const fetchHistoryData = async (selectedTab, IsExport) => {
     if (selectedTab === 3 && (!startDate || !endDate)) {
       setDateError("Both start and end dates are required.");
       return;
@@ -80,26 +82,51 @@ const HistoryPopup = ({ open, onClose, userId }) => {
     if (userId) {
       endpoint += endpoint.includes('?') ? `&userId=${encodeURIComponent(userId)}` : `?userId=${encodeURIComponent(userId)}`;
     }
+    if (IsExport) {
+      endpoint += endpoint.includes('?') ? `&IsExport=true` : `?IsExport=true`;
+    }
   
     try {
-      // Prepend the base URL
-      const response = await axios.get(`https://api-user-dashboard.vercel.app${endpoint}`);
-      console.log(response);
-      const data = response.data;
-  
-      const updatedHistory = { ...history };
-      if (selectedTab === 0) updatedHistory.daily = data;
-      else if (selectedTab === 1) updatedHistory.weekly = data;
-      else if (selectedTab === 2) updatedHistory.monthly = data;
-      else if (selectedTab === 3) updatedHistory.custom = data;
-  
-      setHistory(updatedHistory);
+      
+      const response = await axios.get(`https://api-user-dashboard.vercel.app${endpoint}`, {
+        responseType: IsExport ? 'blob' : 'json',
+      });
+      if (IsExport) {
+
+          // Extract filename from Content-Disposition header
+  const contentDisposition = response.headers['content-disposition'];
+  let filename = 'ExportedData.xlsx'; // Default filename
+
+  if (contentDisposition) {
+    const match = contentDisposition.match(/filename="(.+)"/);
+    if (match && match[1]) {
+      filename = match[1];
+    }
+  }
+        // Create a link to download the file
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'WorkHistory.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        const data = response.data;
+        const updatedHistory = { ...history };
+        if (selectedTab === 0) updatedHistory.daily = data;
+        else if (selectedTab === 1) updatedHistory.weekly = data;
+        else if (selectedTab === 2) updatedHistory.monthly = data;
+        else if (selectedTab === 3) updatedHistory.custom = data;
+        setHistory(updatedHistory);
+      }
     } catch (error) {
       console.error("Error fetching work history:", error);
     } finally {
       setLoading(false);
     }
-  };  
+  };
+  
 
   function calculateSecondsBetweenDates(pastDate, endDate) {
     const past = new Date(pastDate);
@@ -251,7 +278,13 @@ const HistoryPopup = ({ open, onClose, userId }) => {
         </IconButton>
       </DialogTitle>
       <DialogContent>
+      
         <div className="Tab" style={{ display: "flex", flexDirection: "column" }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Tabs
             value={tab}
             onChange={(e, newValue) => setTab(newValue)}
@@ -287,7 +320,8 @@ const HistoryPopup = ({ open, onClose, userId }) => {
               />
             ))}
           </Tabs>
-
+          <TbTableExport onClick={() => fetchHistoryData(tab, true)} size={30} />
+          </Stack>
           {tab === 3 && (
             <Box sx={{ marginTop: 4, justifyContent: "left", display: "flex", flexDirection: "column" }}>
               <TextField

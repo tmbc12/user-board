@@ -13,7 +13,6 @@ import CreateCard from "./UserCreateCard";
 import HistoryIcon from "@mui/icons-material/History";
 import HistoryPopup from "./HistoryPopup";
 
-
 // Importing Google Fonts
 import "@fontsource/montserrat/400.css"; // Normal font weight for Montserrat
 import "@fontsource/montserrat/700.css"; // Bold font weight for Montserrat
@@ -57,10 +56,9 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
   };
 
   const handleHistory = () => {
-    debugger;
-    setHistoryOpen(true)
-    setCurrentUser(task._id)
-  }
+    setHistoryOpen(true);
+    setCurrentUser(task._id);
+  };
 
   const handleComplete = () => {
     if (!description.trim()) {
@@ -91,7 +89,6 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
         return res.json(); // Parse the JSON from the response
       })
       .then((data) => {
-        debugger;
         alert("Updated successfully");
         window.location.reload(); // Reload the page if needed
       })
@@ -117,47 +114,45 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
         },
       }}
     >
-       <HistoryPopup
-          userId={currentUser}
-          open={historyOpen}
-          onClose={() => setHistoryOpen(false)}
-        />
+      <HistoryPopup
+        userId={currentUser}
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+      />
       <CardContent>
-      <Stack
+        <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
         >
-        <Typography
-          variant="subtitle1"
-          component="div"
-          sx={{
-            marginBottom: 1,
-            fontWeight: "bold",
-            fontFamily: "Roboto",
-          }}
-        >
-          {task.name || "No Name"}
-        </Typography>
-        <Stack
-          direction="row"
-          alignItems="center"
-          gap="10px"
-        >
-        <Timer
+          <Typography
+            variant="subtitle1"
+            component="div"
+            sx={{
+              marginBottom: 1,
+              fontWeight: "bold",
+              fontFamily: "Roboto",
+            }}
+          >
+            {task.name || "No Name"}
+          </Typography>
+          <Stack direction="row" alignItems="center" gap="10px">
+            <Timer
               isRunning={isRunning}
               onTimeUpdate={setTime}
               initialTime={time}
             />
-        <HistoryIcon onClick={handleHistory} sx={{cursor:"pointer"}}/>
-        </Stack>
+            <HistoryIcon onClick={handleHistory} sx={{ cursor: "pointer" }} />
+          </Stack>
         </Stack>
         <TextField
           label="Work Description"
           value={description}
           onChange={(e) => {
-            setDescription(e.target.value);
-            onDescriptionChange(index, e.target.value);
+            if (description === null) {
+              setDescription(e.target.value);
+              onDescriptionChange(index, e.target.value);
+            }
           }}
           fullWidth
           variant="outlined"
@@ -193,6 +188,9 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
               fontSize: "0.875rem",
             },
           }}
+          InputProps={{
+            readOnly: description !== null,
+          }}
         />
         <Stack
           direction="row"
@@ -207,9 +205,7 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
               fontFamily: "Roboto",
               fontWeight: 700,
             }}
-          >
-            
-          </Typography>
+          ></Typography>
           {!isRunning ? (
             <Button
               variant="contained"
@@ -272,7 +268,6 @@ const App = () => {
     fetch("https://api-user-dashboard.vercel.app/users")
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         setCards(
           data.map((user) => ({
             _id: user._id,
