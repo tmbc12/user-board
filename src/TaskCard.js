@@ -149,10 +149,8 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
           label="Work Description"
           value={description}
           onChange={(e) => {
-            if (description === null) {
               setDescription(e.target.value);
               onDescriptionChange(index, e.target.value);
-            }
           }}
           fullWidth
           variant="outlined"
@@ -189,7 +187,7 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
             },
           }}
           InputProps={{
-            readOnly: description !== null,
+            readOnly: isRunning,
           }}
         />
         <Stack

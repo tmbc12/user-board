@@ -320,7 +320,14 @@ const HistoryPopup = ({ open, onClose, userId }) => {
               />
             ))}
           </Tabs>
-          <TbTableExport onClick={() => fetchHistoryData(tab, true)} size={30} />
+          <Button
+                variant="contained"
+                color="primary"
+                onClick={() => fetchHistoryData(tab, true)}
+              >
+                Export
+              </Button>
+          {/* <TbTableExport onClick={() => fetchHistoryData(tab, true)} size={30} /> */}
           </Stack>
           {tab === 3 && (
             <Box sx={{ marginTop: 4, justifyContent: "left", display: "flex", flexDirection: "column" }}>
