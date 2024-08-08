@@ -322,7 +322,9 @@ const HistoryPopup = ({ open, onClose, userId }) => {
           </Tabs>
           <Button
                 variant="contained"
-                color="primary"
+                sx={{
+                  fontWeight: "bold",
+                }}
                 onClick={() => fetchHistoryData(tab, true)}
               >
                 Export
