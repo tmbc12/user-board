@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useContext } from "react";
 import {
   Card as MuiCard,
   CardContent,
@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import "./App.css";
 import { BsPlusCircle } from "react-icons/bs";
+import MyContext from "./context/UserContext";
 
 import "@fontsource/montserrat/400.css";
 import "@fontsource/montserrat/700.css";
@@ -16,6 +17,7 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/700.css";
 
 const CreateCard= ({ fetchUser }) => {
+  const {  setOpen, setSnackbarDescription, setSeverity } = useContext(MyContext);
   const [isClicked, setIsClicked] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
@@ -42,11 +44,17 @@ const CreateCard= ({ fetchUser }) => {
           // Handle success (e.g., show a success message or reset the input)
           setInputValue(""); // Clear input after success
           setIsClicked(false); // Optionally, reset state
-          alert("User created successfully!");
+          setOpen(true);
+          setSnackbarDescription("User created successfully!");
+          setSeverity("success");
+          // alert("User created successfully!");
           fetchUser()
         } else {
           // Handle error
-          alert("Failed to create user.");
+          setOpen(true);
+          setSnackbarDescription("Failed to create user.");
+          setSeverity("error");
+          // alert("Failed to create user.");
         }
       } catch (error) {
         // Handle network or other errors

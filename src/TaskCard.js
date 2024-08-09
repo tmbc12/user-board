@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Card as MuiCard,
   CardContent,
@@ -12,6 +12,7 @@ import "./App.css";
 import CreateCard from "./UserCreateCard";
 import HistoryIcon from "@mui/icons-material/History";
 import HistoryPopup from "./HistoryPopup";
+import MyContext from "./context/UserContext";
 
 // Importing Google Fonts
 import "@fontsource/montserrat/400.css"; // Normal font weight for Montserrat
@@ -19,8 +20,11 @@ import "@fontsource/montserrat/700.css"; // Bold font weight for Montserrat
 import "@fontsource/roboto/400.css"; // Normal font weight for Roboto
 import "@fontsource/roboto/700.css"; // Bold font weight for Roboto
 
-const TaskCard = ({ index, task, onDescriptionChange }) => {
+const TaskCard = ({ index, task, onDescriptionChange, fetchUser }) => {
+  const { setOpen, setSnackbarDescription, setSeverity } =
+    useContext(MyContext);
   const [description, setDescription] = useState(task.description || "");
+  // setDescription(task.description);
   const [time, setTime] = useState(task.time || 0);
   const [isRunning, setIsRunning] = useState(
     !!task.startTime && !task.stopTime
@@ -28,11 +32,13 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
   const [descriptionError, setDescriptionError] = useState(false);
   const [currentUser, setCurrentUser] = useState();
 
+
   const handleStart = () => {
     if (!description.trim()) {
       setDescriptionError(true);
       return; // Stop further execution if the description is empty
     }
+ 
 
     setDescriptionError(false); // Clear the error if validation passes
 
@@ -51,7 +57,10 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
       body: JSON.stringify(newWork),
     }).then((res) => {
       res.json();
-      window.location.reload();
+      setOpen(true);
+      setSnackbarDescription("Work Created successfully");
+      setSeverity("success");
+      fetchUser(); // Fetch the updated list of cards
     });
   };
 
@@ -89,13 +98,17 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
         return res.json(); // Parse the JSON from the response
       })
       .then((data) => {
-        alert("Updated successfully");
-        window.location.reload(); // Reload the page if needed
+        setSnackbarDescription("Updated successfully");
+        setSeverity("success");
+        setOpen(true);
+        fetchUser(); // Fetch the updated list of cards
       })
       .catch((error) => {
         // Handle any errors that occurred during the fetch
         console.error("Error:", error);
-        alert("Failed to update work");
+        setOpen(true);
+        setSnackbarDescription("Failed to update work");
+        setSeverity("error");
       });
   };
 
@@ -149,8 +162,8 @@ const TaskCard = ({ index, task, onDescriptionChange }) => {
           label="Work Description"
           value={description}
           onChange={(e) => {
-              setDescription(e.target.value);
-              onDescriptionChange(index, e.target.value);
+            setDescription(e.target.value);
+            onDescriptionChange(index, e.target.value);
           }}
           fullWidth
           variant="outlined"
@@ -253,6 +266,9 @@ const App = () => {
   const [cards, setCards] = useState([]);
   const [loadingIndex, setLoadingIndex] = useState(null);
 
+  const { setIsLoading } =
+    useContext(MyContext);
+
   function calculateSecondsBetweenDates(pastDate, endDate) {
     const past = new Date(pastDate);
     const current = endDate ? new Date(endDate) : new Date();
@@ -262,7 +278,13 @@ const App = () => {
     return differenceInSeconds;
   }
 
+  function clean() {
+    setCards([])
+
+  }
+
   function fetchUser() {
+    setIsLoading(true);
     fetch("https://api-user-dashboard.vercel.app/users")
       .then((res) => res.json())
       .then((data) => {
@@ -277,17 +299,24 @@ const App = () => {
                   user.lastWork?.startTime,
                   user.lastWork?.stopTime
                 )
-              : 0, // Initialize with 0; you can compute the time based on work start and stop times
+              : 0,
             startTime: user.lastWork?.startTime || null,
             stopTime: user.lastWork?.stopTime || null,
           }))
         );
+      })
+      .catch((error) => {
+        console.error("Error fetching users:", error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }
+  
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  },[]);
 
   const handleDescriptionChange = (index, newDescription) => {
     const updatedCards = [...cards];
@@ -297,6 +326,7 @@ const App = () => {
 
   return (
     <div className="app">
+      
       <div className="grid">
         {cards.map((card, index) => (
           <TaskCard
@@ -304,6 +334,7 @@ const App = () => {
             index={index}
             task={card}
             onDescriptionChange={handleDescriptionChange}
+            fetchUser={clean}
           />
         ))}
 
