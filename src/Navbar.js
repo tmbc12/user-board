@@ -50,7 +50,7 @@ const Navbar = ({ onHistoryClick }) => {
             },
           }}
         >
-          <HistoryIcon />
+          <HistoryIcon sx={{ color: 'white' }} />
           <Typography
             variant="body1"
             className="navbar-history-text"

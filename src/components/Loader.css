@@ -9,7 +9,7 @@
   pointer-events: none; /* Allows interaction with the background */
 }
 
-svg path,
-svg rect {
+.loader svg path,
+.loader svg rect {
   fill: #000000; /* Ensures your SVG elements are filled with black */
 }
