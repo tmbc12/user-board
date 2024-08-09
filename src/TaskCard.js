@@ -280,7 +280,7 @@ const App = () => {
 
   function clean() {
     setCards([])
-
+    fetchUser()
   }
 
   function fetchUser() {
